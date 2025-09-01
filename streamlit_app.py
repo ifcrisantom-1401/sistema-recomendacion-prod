@@ -10,9 +10,9 @@ def normalizar_texto(texto):
     texto_sin_tildes = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     return texto_sin_tildes.upper()
 
-# Función para mostrar PDF
+# Función para mostrar PDF (método alternativo para evitar bloqueo de Chrome)
 def mostrar_pdf(archivo_pdf):
-    """Muestra un PDF en Streamlit usando un iframe"""
+    """Muestra un PDF en Streamlit usando un método alternativo"""
     if not os.path.exists(archivo_pdf):
         st.warning(f"El archivo {archivo_pdf} no está disponible en esta versión en la nube.")
         return False
@@ -21,16 +21,28 @@ def mostrar_pdf(archivo_pdf):
         with open(archivo_pdf, "rb") as f:
             base64_pdf = base64.b64encode(f.read()).decode('utf-8')
         
-        # Crear el HTML para mostrar el PDF
+        # Usar método alternativo que es más compatible con Chrome
         pdf_display = f"""
-        <iframe src="data:application/pdf;base64,{base64_pdf}" 
-                width="100%" 
-                height="600" 
-                type="application/pdf">
-        </iframe>
+        <embed src="data:application/pdf;base64,{base64_pdf}" 
+               width="100%" 
+               height="600" 
+               type="application/pdf">
         """
         
         st.markdown(pdf_display, unsafe_allow_html=True)
+        
+        # Alternativa adicional: mostrar enlace directo
+        st.markdown(
+            f"""
+            <div style="text-align:center; margin:10px 0;">
+                <p>Si no puedes ver el PDF arriba, 
+                <a href="data:application/pdf;base64,{base64_pdf}" target="_blank">
+                <strong>haz clic aquí para abrirlo en una nueva pestaña</strong>
+                </a></p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         return True
     except FileNotFoundError:
         st.warning(f"No se encontró el archivo: {archivo_pdf}")
@@ -210,16 +222,16 @@ if st.sidebar.button("Generar Recomendación", type="primary"):
         st.info(f"**Distrito:** {Distrito_display}")
 
     # -----------------------------
-    # FORMULARIO PARA REGISTRO DE VENTA
+    # FORMULARIO PARA REGISTRO DE VENTA (ACTUALIZADO)
     # -----------------------------
     st.markdown("### 🎯 Siguiente Paso")
     st.markdown(
         """
         <div style="text-align:center; margin:30px 0; padding:20px; background-color:#f0f8ff; border-radius:10px;">
-            <p style="font-size:18px; margin-bottom:20px; color:#333;">¿El cliente acepta la propuesta?</p>
-            <a href="https://forms.gle/TU_LINK_AQUI" target="_blank">
+            <p style="font-size:18px; margin-bottom:20px; color:#333;">No olvides registrar esta gestión</p>
+            <a href="https://pacificocia-my.sharepoint.com/:f:/g/personal/mcamino_pacifico_com_pe/EoKRHieZhB9LkpJa6tCqClYBrvHnM6LK_nUkumbFrnALug?e=utUJBJ" target="_blank">
                 <button style="background-color:#28a745; color:white; padding:15px 30px; font-size:18px; border:none; border-radius:10px; cursor:pointer; box-shadow:0 4px 8px rgba(40,167,69,0.3);">
-                    ✅ Registrar Venta
+                    📝 Registrar Gestión
                 </button>
             </a>
         </div>
@@ -236,7 +248,7 @@ else:
     1. **Completa la información** del cliente en el panel lateral
     2. **Haz clic en 'Generar Recomendación'** para obtener el plan sugerido
     3. **Revisa los detalles** y la prima calculada
-    4. **Registra la venta** si el cliente acepta la propuesta
+    4. **Registra la gestión** según el resultado de la propuesta
     """)
     
     # Imagen ilustrativa o placeholder
@@ -251,13 +263,13 @@ else:
     )
 
 # -----------------------------
-# SECCIÓN DE DOCUMENTACIÓN ADICIONAL
+# SECCIÓN DE DOCUMENTACIÓN ADICIONAL (SIN ESTADÍSTICAS)
 # -----------------------------
 st.markdown("---")
 st.header("📚 Recursos para Asesores")
 
-# Crear pestañas para organizar la información
-tab1, tab2, tab3 = st.tabs(["📄 Cartilla Comparativa", "💡 Guía de Venta", "📊 Estadísticas"])
+# Crear pestañas para organizar la información (sin la pestaña de estadísticas)
+tab1, tab2 = st.tabs(["📄 Cartilla Comparativa", "💡 Guía de Venta"])
 
 with tab1:
     st.subheader("Cartilla Comparativa de Seguros Integrales 2024")
@@ -327,24 +339,6 @@ with tab2:
         **"Lo voy a pensar"**  
         → Ofrece información adicional, agenda seguimiento, menciona ofertas limitadas
         """)
-
-with tab3:
-    st.subheader("📊 Panel de Control")
-    
-    # Métricas simuladas para demostración
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("Recomendaciones Hoy", "12", "+3")
-    with col2:
-        st.metric("Ventas Cerradas", "8", "+2")
-    with col3:
-        st.metric("Tasa de Conversión", "67%", "+5%")
-    with col4:
-        st.metric("Prima Promedio", "S/ 1,150", "+8%")
-    
-    st.markdown("---")
-    st.info("💡 **Tip del día:** Los clientes de distritos premium tienen mayor propensión a planes MNAC. ¡Enfócate en los beneficios exclusivos!")
 
 # Footer
 st.markdown("---")
