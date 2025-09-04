@@ -163,38 +163,7 @@ if st.sidebar.button("Generar Recomendación", type="primary"):
             plan = "AM15" if Edad < 30 else "MSLD"
 
     # -----------------------------
-    # TARIFARIO SIMULADO
-    # -----------------------------
-    tarifario = pd.DataFrame([
-        {"Plan":"MNAC", "EdadMin":30, "EdadMax":99, "Sexo":"Masculino", "Dependientes":1, "PrimaAnual":1200},
-        {"Plan":"MNAC", "EdadMin":30, "EdadMax":99, "Sexo":"Femenino", "Dependientes":1, "PrimaAnual":1150},
-        {"Plan":"MLSD", "EdadMin":18, "EdadMax":30, "Sexo":"Femenino", "Dependientes":1, "PrimaAnual":900},
-        {"Plan":"MSLD", "EdadMin":18, "EdadMax":99, "Sexo":"Masculino", "Dependientes":1, "PrimaAnual":1000},
-        {"Plan":"MSLD", "EdadMin":18, "EdadMax":99, "Sexo":"Femenino", "Dependientes":1, "PrimaAnual":950},
-        {"Plan":"AM15", "EdadMin":18, "EdadMax":99, "Sexo":"Femenino", "Dependientes":1, "PrimaAnual":1100},
-        {"Plan":"AM15", "EdadMin":18, "EdadMax":99, "Sexo":"Masculino", "Dependientes":1, "PrimaAnual":1050},
-        # Agregar más combinaciones para múltiples dependientes
-        {"Plan":"MNAC", "EdadMin":30, "EdadMax":99, "Sexo":"Masculino", "Dependientes":2, "PrimaAnual":2200},
-        {"Plan":"MNAC", "EdadMin":30, "EdadMax":99, "Sexo":"Femenino", "Dependientes":2, "PrimaAnual":2100},
-        {"Plan":"MSLD", "EdadMin":18, "EdadMax":99, "Sexo":"Masculino", "Dependientes":2, "PrimaAnual":1800},
-        {"Plan":"MSLD", "EdadMin":18, "EdadMax":99, "Sexo":"Femenino", "Dependientes":2, "PrimaAnual":1750},
-    ])
-
-    resultado = tarifario[
-        (tarifario["Plan"] == plan) &
-        (tarifario["Sexo"] == Sexo) &
-        (tarifario["EdadMin"] <= Edad) &
-        (tarifario["EdadMax"] >= Edad) &
-        (tarifario["Dependientes"] == Numero_dependientes)
-    ]
-
-    if not resultado.empty:
-        prima = resultado.iloc[0]["PrimaAnual"]
-    else:
-        prima = "No disponible"
-
-    # -----------------------------
-    # RESULTADO EN GRANDE CON FONDO SUAVE CELESTE
+    # RESULTADO EN GRANDE CON FONDO SUAVE CELESTE (SIN PRIMA)
     # -----------------------------
     st.markdown(
         f"""
@@ -202,9 +171,9 @@ if st.sidebar.button("Generar Recomendación", type="primary"):
             <h1 style='text-align:center; color:#00BFFF; font-weight:bold; text-shadow: 2px 2px 4px #aaa; margin-bottom:10px;'>
                 🎯 PLAN RECOMENDADO: {plan}
             </h1>
-            <h2 style='text-align:center; color:#0080ff; margin-top:20px;'>
-                💰 Prima Anual: S/ {prima}
-            </h2>
+            <p style='text-align:center; color:#0080ff; font-size:18px; margin-top:20px;'>
+                📋 Consulta los detalles de cobertura y precios en la cartilla comparativa
+            </p>
         </div>
         """,
         unsafe_allow_html=True
@@ -247,8 +216,9 @@ else:
     st.write("""
     1. **Completa la información** del cliente en el panel lateral
     2. **Haz clic en 'Generar Recomendación'** para obtener el plan sugerido
-    3. **Revisa los detalles** y la prima calculada
-    4. **Registra la gestión** según el resultado de la propuesta
+    3. **Revisa los detalles** del plan recomendado
+    4. **Consulta la cartilla comparativa** para información de precios y coberturas
+    5. **Registra la gestión** según el resultado de la propuesta
     """)
     
     # Imagen ilustrativa o placeholder
@@ -351,3 +321,4 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
