@@ -47,9 +47,10 @@ def normalizar_texto(texto):
     return texto_sin_tildes.upper()
 
 def cargar_tarifas():
-    """Carga las tarifas base desde el archivo Excel"""
+    """Carga las tarifas base desde el archivo CSV"""
     try:
-        df_tarifas = pd.read_excel('tarifario_base.xlsx')
+        # Intentar cargar desde CSV primero
+        df_tarifas = pd.read_csv('tarifario_base.csv')
         # Validar columnas requeridas
         columnas_requeridas = ['RangoEtario']
         for col in columnas_requeridas:
@@ -58,16 +59,21 @@ def cargar_tarifas():
                 return None
         return df_tarifas
     except FileNotFoundError:
-        st.error("⚠️ No se encontró el archivo 'tarifario_base.xlsx'")
+        st.error("⚠️ No se encontró el archivo 'tarifario_base.csv'")
         return None
     except Exception as e:
         st.error(f"⚠️ Error al cargar tarifas: {str(e)}")
         return None
 
 def cargar_campanas():
-    """Carga las campañas activas desde archivo Excel o retorna campañas por defecto"""
+    """Carga las campañas activas desde archivo CSV o retorna campañas por defecto"""
     try:
-        df_campanas = pd.read_excel('campanas.xlsx')
+        df_campanas = pd.read_csv('campanas.csv')
+        # Convertir columnas de fecha si existen
+        if 'Fecha_Inicio' in df_campanas.columns:
+            df_campanas['Fecha_Inicio'] = pd.to_datetime(df_campanas['Fecha_Inicio'])
+        if 'Fecha_Fin' in df_campanas.columns:
+            df_campanas['Fecha_Fin'] = pd.to_datetime(df_campanas['Fecha_Fin'])
         return df_campanas
     except:
         # Campañas por defecto si no existe el archivo
@@ -192,8 +198,7 @@ def obtener_tarifa_base(df_tarifas, plan, edad, es_hijo=False):
         elif edad == 26:
             rango = 'Hijos 26 años'
         else:
-            # CORRECCIÓN: Para hijos mayores de 26 años, usar la edad específica
-            # Ejemplo: hijo de 27 años -> buscar "27 años" en el tarifario
+            # Para hijos mayores de 26 años, usar la edad específica
             rango = f'{edad} años'
     else:
         if edad <= 17:
@@ -340,7 +345,7 @@ menu = st.sidebar.radio(
 if menu == "🎯 Recomendador de Plan":
     st.sidebar.header("Información del Cliente")
     
-    # NUEVO: Campo de Continuidad
+    # Campo de Continuidad
     tiene_continuidad = st.sidebar.selectbox(
         "¿Cuenta con continuidad?",
         ["No", "Sí"],
@@ -394,7 +399,7 @@ if menu == "🎯 Recomendador de Plan":
                 if Sexo == "Masculino":
                     plan = "MNAC" if Edad >= 30 else "MSLD"
                 else:
-                    plan = "MNAC" if Edad > 30 else "MSLD"  # Corregido: era MLSD
+                    plan = "MNAC" if Edad > 30 else "MSLD"
 
             elif Distrito in ["LOS OLIVOS", "SAN JUAN DE LURIGANCHO", "SAN JUAN DE MIRAFLORES"]:
                 if Sexo == "Femenino":
@@ -407,7 +412,7 @@ if menu == "🎯 Recomendador de Plan":
                 else:
                     plan = "AM15" if Edad < 30 else "MSLD"
 
-            # NUEVO: Validar edad según continuidad
+            # Validar edad según continuidad
             es_valido, mensaje_error = validar_edad_sin_continuidad(plan, Edad)
             
             if not es_valido:
@@ -429,7 +434,7 @@ if menu == "🎯 Recomendador de Plan":
             # Obtener planes alternativos válidos
             segunda_opcion, tercera_opcion = obtener_planes_alternativos(plan, Edad, tiene_continuidad)
             
-            # Nombres de los planes (solo siglas)
+            # Nombres de los planes
             nombres_planes = {
                 'MNAC': 'MNAC',
                 'MSLD': 'MSLD',
@@ -441,7 +446,7 @@ if menu == "🎯 Recomendador de Plan":
                 'MINT': 'MINT'
             }
             
-            # Mostrar resultado - Plan Recomendado (Grande)
+            # Mostrar resultado - Plan Recomendado
             st.success("✅ Recomendación generada exitosamente")
             
             st.markdown(
@@ -467,7 +472,7 @@ if menu == "🎯 Recomendador de Plan":
             
             col1, col2 = st.columns(2)
             
-            # Segunda opción (mediano)
+            # Segunda opción
             if segunda_opcion:
                 with col1:
                     st.markdown(
@@ -487,7 +492,7 @@ if menu == "🎯 Recomendador de Plan":
                         unsafe_allow_html=True
                     )
             
-            # Tercera opción (pequeño)
+            # Tercera opción
             if tercera_opcion:
                 with col2:
                     st.markdown(
@@ -591,9 +596,9 @@ elif menu == "💰 Calculadora de Tarifas":
     st.header("💰 Calculadora de Tarifas")
     
     if df_tarifas is None:
-        st.error("⚠️ No se pudo cargar el archivo de tarifas. Verifica que 'tarifario_base.xlsx' esté en la carpeta correcta.")
+        st.error("⚠️ No se pudo cargar el archivo de tarifas. Verifica que 'tarifario_base.csv' esté en la carpeta correcta.")
     else:
-        # NUEVO: Mostrar si hay datos pre-cargados de la recomendación
+        # Mostrar si hay datos pre-cargados
         if st.session_state.recomendacion_generada:
             st.success("✅ Datos cargados desde la recomendación anterior")
             
@@ -652,7 +657,6 @@ elif menu == "💰 Calculadora de Tarifas":
             
             with col1:
                 if i == 0:
-                    # El primer asegurado siempre es Titular (no editable)
                     st.text_input(
                         f"Relación de parentesco",
                         value="Titular",
@@ -661,7 +665,6 @@ elif menu == "💰 Calculadora de Tarifas":
                     )
                     relacion = "Titular"
                 else:
-                    # Los demás pueden elegir
                     relacion = st.selectbox(
                         f"Relación de parentesco",
                         ["Hijo", "Cónyuge", "Otro"],
@@ -669,7 +672,6 @@ elif menu == "💰 Calculadora de Tarifas":
                     )
             
             with col2:
-                # NUEVO: Usar edad del titular si es el primero y hay recomendación
                 if i == 0 and st.session_state.recomendacion_generada:
                     edad_default = st.session_state.edad_titular
                 else:
@@ -683,7 +685,7 @@ elif menu == "💰 Calculadora de Tarifas":
                     key=f"edad_{i}"
                 )
             
-            # NUEVO: Validar edad según continuidad para el titular
+            # Validar edad según continuidad para el titular
             if i == 0 and st.session_state.tiene_continuidad == "No":
                 es_valido, mensaje_error = validar_edad_sin_continuidad(plan_seleccionado, edad)
                 if not es_valido:
@@ -695,7 +697,7 @@ elif menu == "💰 Calculadora de Tarifas":
             tarifa_base = obtener_tarifa_base(df_tarifas, plan_seleccionado, edad, es_hijo)
             
             if tarifa_base:
-                # Aplicar descuento de campaña (usando la continuidad guardada)
+                # Aplicar descuento de campaña
                 tarifa_desc, desc_pct, campana = aplicar_descuento_campana(
                     df_campanas, 
                     plan_seleccionado, 
@@ -767,7 +769,7 @@ elif menu == "💰 Calculadora de Tarifas":
             
             st.dataframe(df_resumen, use_container_width=True)
             
-            # Tabla de amortización resumida
+            # Tabla de amortización
             if num_cuotas > 1:
                 st.markdown("#### 📅 Plan de Pagos")
                 
@@ -836,7 +838,6 @@ elif menu == "📊 Campañas Vigentes":
                     
                     st.markdown("##### 💎 Descuentos por Plan")
                     
-                    # Crear columnas para mostrar descuentos
                     planes = ['MINT', 'MNAC', 'MSLD', 'AM05', 'AM18', 'AM17', 'AM15']
                     cols = st.columns(len(planes))
                     
@@ -863,7 +864,6 @@ elif menu == "📊 Campañas Vigentes":
                     
                     st.markdown("##### 💎 Descuentos por Plan")
                     
-                    # Crear columnas para mostrar descuentos
                     planes = ['MINT', 'MNAC', 'MSLD', 'AM05', 'AM18', 'AM17', 'AM15']
                     cols = st.columns(len(planes))
                     
@@ -885,7 +885,7 @@ elif menu == "📊 Campañas Vigentes":
                 st.info(f"{tipo_icon} **{campana['Nombre']}** ({campana['Tipo_Campana']}) - Inicia: {campana['Fecha_Inicio'].strftime('%d/%m/%Y')}")
     else:
         st.warning("⚠️ No se encontraron campañas configuradas")
-        st.info("Para configurar campañas, crea un archivo 'campanas.xlsx' con las columnas: Nombre, Fecha_Inicio, Fecha_Fin, Tipo_Campana (General/Continuidad), y los planes con sus respectivos descuentos.")
+        st.info("Para configurar campañas, crea un archivo 'campanas.csv' con las columnas: Nombre, Fecha_Inicio, Fecha_Fin, Tipo_Campana (General/Continuidad), y los planes con sus respectivos descuentos.")
 
 # ==================== MÓDULO 4: RECURSOS ====================
 
@@ -1031,11 +1031,8 @@ st.markdown(
     """
     <div style="text-align:center; color:#666; font-size:12px; padding:20px;">
         🏥 Sistema de Recomendación de Productos Integrales | Pacífico Salud 2025<br>
-        <em>Versión 2.0 - Con soporte de continuidad y datos persistentes entre módulos</em>
+        <em>Versión 2.0 CSV - Compatible con Python 3.13 - Sin dependencia de openpyxl</em>
     </div>
     """,
     unsafe_allow_html=True
 )
-# rebuild trigger
-
-
